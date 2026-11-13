@@ -125,9 +125,19 @@
   .owner { margin-top: 24px; padding-top: 24px; border-top: 2px dashed #c9c3cf; display: grid; gap: 12px; justify-items: center; }
   .owner ol { width: 100%; margin: 0; padding: 0; list-style: none; border: 2px solid var(--ink); background: var(--paper); }
   .owner li {
-    display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 12px; align-items: baseline;
-    padding: 10px 14px; border-bottom: 1px dashed #c9c3cf;
+    display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto auto; gap: 8px 12px; align-items: center;
+    padding: 10px 14px; border-bottom: 1px dashed #c9c3cf; text-align: left;
   }
+  @media (max-width: 520px) {
+    .owner li { grid-template-columns: 3.2em minmax(0, 1fr) auto; }
+    .owner li time { grid-column: 2; grid-row: 2; }
+    .owner li .del { grid-column: 3; grid-row: 1 / span 2; }
+  }
+  button.del {
+    font: 400 .85rem var(--f-body); padding: 5px 12px; color: var(--ink); background: transparent;
+    border: 1.5px solid var(--ink); box-shadow: none;
+  }
+  button.del.armed { color: #fff; background: #b3261e; border-color: #b3261e; }
   .owner li:last-child { border-bottom: 0; }
   .owner li b { font: 800 1rem var(--f-display); color: var(--violet); }
   .owner li span { overflow-wrap: anywhere; }
@@ -191,6 +201,7 @@
 
     <section class="owner" id="owner" hidden>
       <p class="tag">신청자 명단 · 나만 보여요</p>
+      <p class="empty">참석이 어려워진 분은 삭제를 두 번 눌러 명단에서 지울 수 있어요. 지우면 그 번호가 비어 남은 수량이 하나 늘어요.</p>
       <ol id="ownerList"></ol>
       <p class="empty" id="ownerEmpty">아직 초대장을 받은 사람이 없어요.</p>
     </section>
@@ -405,7 +416,9 @@
     const box = $('owner'), list = $('ownerList'), empty = $('ownerEmpty');
     box.hidden = false;
     db.collection('invites').onSnapshot((snap) => {
-      const rows = snap.docs.map((d) => d.data()).filter((d) => d && typeof d.nick === 'string');
+      const rows = snap.docs
+        .map((d) => Object.assign({ _id: d.id }, d.data()))
+        .filter((d) => typeof d.nick === 'string');
       rows.sort((a, b) => (a.no || 0) - (b.no || 0));
       list.textContent = '';
       rows.forEach((r) => {
@@ -418,7 +431,29 @@
         tm.textContent = r.at
           ? new Date(r.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
           : '';
-        li.append(no, nm, tm);
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'del';
+        del.textContent = '삭제';
+        let armed = null;
+        del.addEventListener('click', async () => {
+          if (!armed) {
+            del.textContent = '정말 삭제';
+            del.classList.add('armed');
+            armed = setTimeout(() => { armed = null; del.textContent = '삭제'; del.classList.remove('armed'); }, 4000);
+            return;
+          }
+          clearTimeout(armed);
+          del.disabled = true; del.textContent = '삭제 중…';
+          try {
+            await db.doc('invites/' + r._id).delete();
+            if (r.no) await db.doc('slots/' + slotId(r.no)).delete();
+          } catch (_) {
+            del.disabled = false; del.textContent = '다시 시도';
+            armed = null; del.classList.remove('armed');
+          }
+        });
+        li.append(no, nm, tm, del);
         list.append(li);
       });
       list.hidden = !rows.length;
