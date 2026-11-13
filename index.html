@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>사냥꾼과 단의 언약식</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap">
+<style>
+  /* Concept: the poster's own grey paper. A quiet opening line, a long breath, then three poster images that fade in as you scroll, then a sticker-style claim panel. */
+  :root {
+    --bg: #ebebeb;
+    --paper: #f8f8f8;
+    --ink: #1c1c1c;
+    --purple: #a882b5;
+    --violet: #6f4789;
+    --mute: #66606b;
+    --f-display: 'Nanum Myeongjo', 'Batang', 'Noto Serif KR', serif;
+    --f-body: 'Gowun Batang', 'Batang', 'Noto Serif KR', serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  img { max-width: 100%; }
+  html { background: var(--bg); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.7 var(--f-body);
+    padding-top: 0;
+    padding-bottom: clamp(48px, 8vw, 88px);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    -webkit-font-smoothing: antialiased;
+  }
+  .col { max-width: 760px; margin: 0 auto; }
+
+  /* 첫 화면: 문구만 */
+  .intro {
+    min-height: 92vh; min-height: 92svh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+    padding-block: 48px;
+  }
+  .intro p {
+    margin: 0; font: 700 clamp(2.3rem, 9.5vw, 3.8rem)/1.45 var(--f-display); letter-spacing: .04em;
+    opacity: 0; animation: rise 1.1s ease both;
+  }
+  .intro .l1 { color: var(--ink); animation-delay: .4s; }
+  .intro .l2 { color: var(--violet); animation-delay: 1.7s; }
+  .intro .cue {
+    margin-top: 56px; font: 800 1.6rem/1 var(--f-display); color: var(--purple);
+    animation: rise 1s ease 3.2s both, bob 2s ease-in-out 4.3s infinite;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+
+  /* 이미지: 위에서 아래로 한 줄, 스크롤하면 나타남 */
+  .strip { display: block; }
+  .frame { margin: 0; opacity: 0; min-width: 0; }
+  .frame img { display: block; width: 100%; height: auto; }
+  .frame.in { animation: pop .95s cubic-bezier(.2, .9, .25, 1.1) both; }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(36px) scale(.96); filter: blur(7px); }
+    to   { opacity: 1; transform: none; filter: none; }
+  }
+
+  .panel { margin-top: clamp(36px, 6vw, 64px); display: grid; gap: 28px; text-align: center; }
+  .tag {
+    display: inline-block; margin: 0; padding: 1px 14px; background: #fff; color: var(--ink);
+    border: 2px solid var(--ink); transform: skew(-9deg);
+    font: 800 .95rem/1.6 var(--f-display); letter-spacing: .08em;
+  }
+  .panel > div:first-child { justify-self: center; }
+  .board, .card {
+    background: var(--paper); border: 2px solid var(--ink); box-shadow: 8px 8px 0 var(--purple);
+    padding: clamp(22px, 4.5vw, 36px);
+  }
+  .count { display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
+  .count b {
+    font: 800 clamp(4.6rem, 15vw, 6.5rem)/.95 var(--f-display); color: var(--violet);
+    font-variant-numeric: tabular-nums;
+  }
+  .count div { padding-bottom: 8px; line-height: 1.35; }
+  .count span { display: block; font: 800 1.5rem var(--f-display); color: var(--mute); }
+  .count small { color: var(--mute); font-size: .92rem; }
+
+  label.lab { display: block; margin: 0 0 8px; font: 800 1.25rem var(--f-display); }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  #nick, #adminPw {
+    flex: 1 1 200px; min-width: 0; padding: 13px 14px; font: inherit; font-size: 16px; color: var(--ink);
+    background: #fff; border: 2px solid var(--ink); border-radius: 0;
+  }
+  #nick::placeholder, #adminPw::placeholder { color: #8d8793; }
+  #nick:focus-visible, button:focus-visible { outline: 3px solid var(--purple); outline-offset: 2px; }
+  button {
+    font: 800 1.1rem var(--f-display); padding: 13px 24px; cursor: pointer; border-radius: 0;
+    color: #fff; background: var(--violet); border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink);
+  }
+  button:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  button:disabled, #nick:disabled { opacity: .45; cursor: not-allowed; }
+  button.ghost {
+    color: var(--ink); background: transparent; border-color: var(--ink); box-shadow: none;
+    font: 400 .95rem var(--f-body); padding: 8px 16px;
+  }
+  .status { min-height: 1.7em; margin: 12px 0 0; color: var(--violet); font-size: .95rem; }
+
+  .card { position: relative; }
+  .card .no { margin: 0 0 22px; }
+  .card .no b { font-size: 1.15rem; font-weight: 400; }
+  .to { margin: 0; font: 800 clamp(2rem, 6vw, 2.8rem)/1.3 var(--f-display); overflow-wrap: anywhere; min-height: 1.3em; }
+  .to .nim { margin-left: .15em; color: var(--violet); }
+  .phrase { margin: 12px 0 0; font: 700 clamp(1.2rem, 3.4vw, 1.5rem)/1.8 var(--f-display); min-height: 3.6em; }
+  .phrase span { display: block; min-height: 1.8em; }
+  .event { margin: 18px 0 0; padding-top: 14px; border-top: 2px dashed #c9c3cf; color: var(--ink); font-size: .98rem; }
+  .event span { display: block; }
+  .note { margin: 18px 0 0; color: var(--mute); font-size: .88rem; }
+  .typing::after {
+    content: ''; display: inline-block; width: 3px; height: 1em; margin-left: 3px;
+    vertical-align: -.12em; background: var(--violet); animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .again { margin-top: 18px; }
+  .foot { margin: 8px 0 0; text-align: center; color: var(--mute); font-size: .9rem; letter-spacing: .06em; }
+
+  /* 주인에게만 보이는 신청자 명단 */
+  .owner { margin-top: 24px; padding-top: 24px; border-top: 2px dashed #c9c3cf; display: grid; gap: 12px; justify-items: center; }
+  .owner ol { width: 100%; margin: 0; padding: 0; list-style: none; border: 2px solid var(--ink); background: var(--paper); }
+  .owner li {
+    display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto auto; gap: 8px 12px; align-items: center;
+    padding: 10px 14px; border-bottom: 1px dashed #c9c3cf; text-align: left;
+  }
+  @media (max-width: 520px) {
+    .owner li { grid-template-columns: 3.2em minmax(0, 1fr) auto; }
+    .owner li time { grid-column: 2; grid-row: 2; }
+    .owner li .del { grid-column: 3; grid-row: 1 / span 2; }
+  }
+  button.del {
+    font: 400 .85rem var(--f-body); padding: 5px 12px; color: var(--ink); background: transparent;
+    border: 1.5px solid var(--ink); box-shadow: none;
+  }
+  button.del.armed { color: #fff; background: #b3261e; border-color: #b3261e; }
+  .owner li:last-child { border-bottom: 0; }
+  .owner li b { font: 800 1rem var(--f-display); color: var(--violet); }
+  .owner li span { overflow-wrap: anywhere; }
+  .owner li time { color: var(--mute); font-size: .85rem; white-space: nowrap; }
+  .owner .empty { margin: 0; color: var(--mute); font-size: .92rem; }
+
+  .guests { display: grid; gap: 12px; justify-items: center; }
+  #guestList { width: 100%; margin: 0; padding: 0; list-style: none; border: 2px solid var(--ink); background: var(--paper); box-shadow: 8px 8px 0 var(--purple); }
+  #guestList li {
+    display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
+    padding: 13px 16px; border-bottom: 1px dashed #c9c3cf; text-align: left;
+  }
+  #guestList li:last-child { border-bottom: 0; }
+  #guestList li b { font: 800 1rem var(--f-display); color: var(--violet); font-variant-numeric: tabular-nums; }
+  #guestList li span { overflow-wrap: anywhere; }
+  #guestList li strong { font-weight: 800; color: var(--violet); }
+  #guestList li.new { animation: rise 0.9s ease both; }
+  .guests .empty, .owner .empty { margin: 0; color: var(--mute); font-size: .92rem; }
+  @media (prefers-reduced-motion: reduce) {
+    .intro p { opacity: 1 !important; animation: none !important; transform: none !important; }
+    .frame { opacity: 1 !important; animation: none !important; transform: none !important; filter: none !important; }
+    .typing::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main class="col" id="page">
+  <header class="intro">
+    <p class="l1">저희 둘의 언약식에</p>
+    <p class="l2">초대합니다</p>
+    <p class="cue" aria-hidden="true">↓</p>
+  </header>
+
+  <section class="strip" id="strip" aria-label="언약식 안내 이미지"></section>
+
+  <section class="panel" id="panel">
+    <div>
+      <p class="tag">INVITATION</p>
+    </div>
+
+    
+
+    <div>
+      <div id="formWrap">
+        <form id="form" autocomplete="off">
+          <label class="lab" for="nick">인게임 닉네임</label>
+          <div class="row">
+            <input id="nick" type="text" maxlength="20" placeholder="닉네임을 입력하세요" disabled>
+            <button type="submit" id="go" disabled>초대장 받기</button>
+          </div>
+        </form>
+        <p class="status" id="status" role="status"></p>
+      </div>
+
+      <div id="cardWrap" hidden>
+        <article class="card" id="card" role="group">
+          <p class="no tag">No. <b id="cardNo"></b></p>
+          <p class="to"><span id="cardName"></span><span class="nim">님</span></p>
+          <p class="phrase"><span id="l1"></span><span id="l2"></span></p>
+          <p class="event" id="event" hidden></p>
+          <p class="note" id="cardNote">이 화면을 캡처해 두면 초대장으로 쓸 수 있어요.</p>
+        </article>
+        <button type="button" class="ghost again" id="again">다른 이름으로 이어서 신청하기</button>
+      </div>
+    </div>
+
+    
+
+    <section class="guests" id="guests" aria-live="polite">
+      <p class="tag">참석 명단</p>
+      <ol id="guestList" hidden></ol>
+      <p class="empty" id="guestEmpty">아직 아무도 없어요. 첫 번째로 이름을 남겨 주세요.</p>
+    </section>
+
+    <p class="foot">#냥단언약식</p>
+
+    <section class="owner" id="owner" hidden>
+      <p class="tag">관리자</p>
+      <form id="adminForm" class="row" autocomplete="off">
+        <input id="adminPw" type="password" maxlength="100" placeholder="관리자 비밀번호" autocomplete="current-password">
+        <button type="submit" id="adminGo">열기</button>
+      </form>
+      <p class="status" id="adminStatus" role="status"></p>
+      <p class="empty" id="adminOn" hidden>관리자 모드예요. 참석 명단의 삭제를 두 번 누르면 명단에서 지워지고 그 번호는 다시 비어요.</p>
+    </section>
+  </section>
+</main>
+
+<script>
+(() => {
+  // ---- 설정 -------------------------------------------------------------
+  const TOTAL = 40;
+  const IMAGES = [
+    { src: 'img/01.jpg', w: 1080, h: 1500, alt: 'TANATOS와 DAN의 웨딩 포스터' },
+    { src: 'img/02.jpg', w: 1080, h: 1500, alt: '일시 2026년 11월 29일 일요일 오후 3시, 장소 이멘마하 언약식장' },
+    { src: 'img/03.jpg', w: 1440, h: 600, alt: 'TANATOS X DAN 웨딩 배너, 2026.11.29 오후 3시' },
+  ];
+  const EVENT = { when: '2026.11.29(일) 15:00', where: '이멘마하 언약식장' };
+  // -----------------------------------------------------------------------
+
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (id) => document.getElementById(id);
+  const strip = $('strip');
+  const nickEl = $('nick'), goBtn = $('go'), statusEl = $('status');
+  const formWrap = $('formWrap'), cardWrap = $('cardWrap');
+  $('cardTotal') && ($('cardTotal').textContent = TOTAL);
+
+  // 이미지: 위에서 아래로 한 줄
+  IMAGES.forEach((it) => {
+    const f = document.createElement('figure');
+    f.className = 'frame';
+    const im = new Image();
+    im.src = it.src; im.alt = it.alt || '';
+    im.width = it.w; im.height = it.h;
+    f.append(im);
+    strip.append(f);
+  });
+
+  // 스크롤로 화면에 들어올 때마다 이미지가 페이드인
+  const reveal = (f) => {
+    const im = f.querySelector('img');
+    const show = () => f.classList.add('in');
+    (im && im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(show);
+    setTimeout(show, 3000);
+  };
+  const frames = [...strip.querySelectorAll('.frame')];
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        reveal(e.target);
+      });
+    }, { rootMargin: '0px 0px -15% 0px' });
+    frames.forEach((f) => io.observe(f));
+  } else {
+    frames.forEach(reveal);
+  }
+
+  // ---- 이 브라우저를 구분하는 값 (로그인 없이 "한 사람 한 장" 확인용) -------
+  const safe = (fn, d) => { try { return fn(); } catch (_) { return d; } };
+  let cid = safe(() => localStorage.getItem('hd-cid'), null);
+  if (!cid || !/^[A-Za-z0-9-]{8,64}$/.test(cid)) {
+    cid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : (Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+    safe(() => localStorage.setItem('hd-cid', cid));
+  }
+
+  // ---- 서버 호출 --------------------------------------------------------
+  async function call(path, opts) {
+    const r = await fetch(path, opts);
+    let j = null;
+    try { j = await r.json(); } catch (_) {}
+    if (!r.ok) {
+      const e = new Error((j && j.error) || ('http_' + r.status));
+      e.status = r.status; e.code = j && j.error; e.detail = j && j.detail;
+      throw e;
+    }
+    return j;
+  }
+
+  // ---- 상태 -------------------------------------------------------------
+  let busy = false, flash = '';
+  let adminOn = false, pw = safe(() => sessionStorage.getItem('hd-admin'), '') || '';
+  let rows = [], seen = null, listFailed = false, restored = false;
+
+  function refresh() {
+    nickEl.disabled = busy;
+    goBtn.disabled = busy;
+    statusEl.textContent = flash;
+  }
+
+  // ---- 참석 명단 (모두에게 보임) -------------------------------------------
+  const guestList = $('guestList'), guestEmpty = $('guestEmpty');
+  const authHeader = () => ({ 'x-admin-password': pw });
+
+  function renderList() {
+    guestList.textContent = '';
+    rows.forEach((r) => {
+      const li = document.createElement('li');
+      if (seen && !seen.has(r.no)) li.className = 'new';
+      const no = document.createElement('b');
+      no.textContent = String(r.no).padStart(2, '0');
+      const msg = document.createElement('span');
+      const who = document.createElement('strong');
+      who.textContent = r.nick;
+      msg.append(who, document.createTextNode('님이 언약식에 방문합니다'));
+      li.append(no, msg);
+      if (adminOn) {
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'del'; del.textContent = '삭제';
+        let armed = null;
+        del.addEventListener('click', async () => {
+          if (!armed) {
+            del.textContent = '정말 삭제'; del.classList.add('armed');
+            armed = setTimeout(() => { armed = null; del.textContent = '삭제'; del.classList.remove('armed'); }, 4000);
+            return;
+          }
+          clearTimeout(armed);
+          del.disabled = true; del.textContent = '삭제 중…';
+          try {
+            await call('/api/admin?no=' + encodeURIComponent(r.no), { method: 'DELETE', headers: authHeader() });
+            await loadList(false);
+          } catch (_) {
+            del.disabled = false; del.textContent = '다시 시도'; del.classList.remove('armed'); armed = null;
+          }
+        });
+        li.append(del);
+      }
+      guestList.append(li);
+    });
+    guestList.hidden = !rows.length;
+    guestEmpty.hidden = !!rows.length && !listFailed;
+    guestEmpty.textContent = listFailed && !rows.length
+      ? '명단을 불러오지 못했어요. 잠시 뒤에 새로고침해 주세요.'
+      : '아직 아무도 없어요. 첫 번째로 이름을 남겨 주세요.';
+    seen = new Set(rows.map((r) => r.no));
+  }
+
+  async function loadList(first) {
+    try {
+      const j = await call('/api/list?cid=' + encodeURIComponent(cid));
+      rows = j.rows || []; listFailed = false;
+      renderList();
+      if (!restored && j.mine) { restored = true; showCard(j.mine, false); }
+    } catch (_) {
+      listFailed = true;
+      if (!rows.length) renderList();
+    }
+  }
+
+  // ---- 이름 남기기 ------------------------------------------------------
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    const nick = nickEl.value.trim().replace(/\s+/g, ' ');
+    if (!nick) { flash = '닉네임을 입력해 주세요.'; refresh(); return; }
+    if ([...nick].length > 20) { flash = '닉네임은 20자까지 입력할 수 있어요.'; refresh(); return; }
+
+    busy = true; flash = '저장하는 중이에요…'; refresh();
+    try {
+      const j = await call('/api/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cid, nick }),
+      });
+      flash = '';
+      restored = true;
+      showCard({ no: j.no, nick: j.nick }, j.again);
+      loadList(false);
+    } catch (err) {
+      if (err.code === 'soldout') flash = '초대장이 모두 나갔어요.';
+      else if (err.code === 'limit') flash = '한 기기에서 신청할 수 있는 인원을 모두 채웠어요.';
+      else if (err.code === 'bad_nick') flash = '닉네임을 다시 확인해 주세요.';
+      else if (err.code === 'storage_not_configured') flash = '서버 저장소(Redis)가 아직 연결되지 않았어요. Vercel에서 Upstash를 연결하고 Redeploy 해 주세요.';
+      else if (err.status === 404 || err.status === 405) flash = '서버 함수(api 폴더)가 배포되지 않았어요. api 폴더가 index.html과 같은 위치에 있는지 확인해 주세요.';
+      else flash = '지금은 저장할 수 없어요. (원인: ' + (err.detail || err.code || '알 수 없음') + ')';
+    } finally {
+      busy = false; refresh();
+    }
+  });
+  nickEl.addEventListener('input', () => { if (flash) { flash = ''; refresh(); } });
+
+  // ---- 초대장 카드 ------------------------------------------------------
+  let run = 0;
+  function typeInto(el, text, ms, alive) {
+    return new Promise((res) => {
+      if (REDUCED) { el.textContent = text; res(); return; }
+      const chars = [...text];
+      let i = 0;
+      el.classList.add('typing');
+      const t = setInterval(() => {
+        if (!alive()) { clearInterval(t); el.classList.remove('typing'); res(); return; }
+        el.textContent = chars.slice(0, ++i).join('');
+        if (i >= chars.length) { clearInterval(t); el.classList.remove('typing'); res(); }
+      }, ms);
+    });
+  }
+
+  async function showCard(rec, again) {
+    const my = ++run;
+    const alive = () => my === run;
+    formWrap.hidden = true; cardWrap.hidden = false;
+    $('cardNo').textContent = String(rec.no).padStart(2, '0');
+    $('card').setAttribute('aria-label', rec.nick + '님, 사냥꾼과 단의 언약식에 초대합니다');
+    $('cardNote').textContent = again
+      ? '이미 남긴 이름이에요. 이 화면을 캡처해 두면 초대장으로 쓸 수 있어요.'
+      : '이 화면을 캡처해 두면 초대장으로 쓸 수 있어요.';
+    const ev = $('event');
+    ev.textContent = '';
+    [['일시', EVENT.when], ['장소', EVENT.where]].forEach(([k, v]) => {
+      if (!v) return;
+      const s = document.createElement('span');
+      s.textContent = k + ' · ' + v;
+      ev.append(s);
+    });
+    ev.hidden = !ev.children.length;
+
+    const name = $('cardName'), l1 = $('l1'), l2 = $('l2');
+    name.textContent = ''; l1.textContent = ''; l2.textContent = '';
+    await typeInto(name, rec.nick, 110, alive);
+    if (!alive()) return;
+    await typeInto(l1, '사냥꾼과 단의 언약식에', 70, alive);
+    if (!alive()) return;
+    await typeInto(l2, '초대합니다', 110, alive);
+  }
+
+  $('again').addEventListener('click', () => {
+    run++;
+    cardWrap.hidden = true; formWrap.hidden = false;
+    nickEl.value = ''; flash = ''; refresh();
+    nickEl.focus();
+  });
+
+  // ---- 관리자 (주소 뒤에 #admin 을 붙이고 비밀번호 입력 → 명단에 삭제 버튼) ----
+  const owner = $('owner'), adminForm = $('adminForm'), adminPw = $('adminPw');
+  const adminStatus = $('adminStatus'), adminOnNote = $('adminOn');
+
+  async function verifyAdmin() {
+    try {
+      await call('/api/admin', { headers: authHeader() });
+      adminOn = true;
+      adminForm.hidden = true; adminStatus.textContent = ''; adminOnNote.hidden = false;
+      safe(() => sessionStorage.setItem('hd-admin', pw));
+      renderList();
+    } catch (err) {
+      adminOn = false; adminForm.hidden = false; adminOnNote.hidden = true;
+      if (err.status === 401) { adminStatus.textContent = pw ? '비밀번호가 맞지 않아요.' : ''; safe(() => sessionStorage.removeItem('hd-admin')); }
+      else if (err.status === 429) adminStatus.textContent = '시도가 너무 많아요. 10분 뒤에 다시 해 주세요.';
+      else if (err.code === 'admin_not_configured') adminStatus.textContent = '서버에 관리자 비밀번호(ADMIN_PASSWORD)가 아직 설정되지 않았어요.';
+      else adminStatus.textContent = '확인하지 못했어요. 잠시 뒤에 다시 시도해 주세요.';
+      renderList();
+    }
+  }
+
+  adminForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    pw = adminPw.value;
+    adminPw.value = '';
+    if (pw) verifyAdmin();
+  });
+
+  function syncAdmin() {
+    owner.hidden = location.hash !== '#admin';
+    if (!owner.hidden && pw && !adminOn) verifyAdmin();
+    if (!owner.hidden) owner.scrollIntoView({ block: 'center' });
+  }
+  addEventListener('hashchange', syncAdmin);
+  syncAdmin();
+
+  // ---- 시작 -------------------------------------------------------------
+  refresh();
+  loadList(true);
+  setInterval(() => { if (!document.hidden) loadList(false); }, 10000);
+})();
+
+</script>
+</body>
+</html>
